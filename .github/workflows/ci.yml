@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install Dependencies
+        run: poetry install
+
+      - name: Ruff Lint Check
+        run: poetry run ruff check .
+
+      - name: Run Tests with Coverage
+        run: poetry run pytest --cov=hospital_appointment_application --cov-fail-under=85
+
+      - name: Run Bandit Security Scan
+        run: poetry run bandit -r src/hospital_appointment_application

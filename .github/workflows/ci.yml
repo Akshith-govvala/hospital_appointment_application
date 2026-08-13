@@ -1,7 +1,10 @@
-name: CI
+name: CI-CD
 
 on:
   push:
+    branches:
+      - main
+
   pull_request:
 
 jobs:
@@ -23,11 +26,29 @@ jobs:
       - name: Install Dependencies
         run: poetry install
 
+      # Gate 1 - Ruff
       - name: Ruff Lint Check
         run: poetry run ruff check .
 
+      # Gate 2 - Coverage
       - name: Run Tests with Coverage
         run: poetry run pytest --cov=hospital_appointment_application --cov-fail-under=85
 
+      # Gate 3 - Security
       - name: Run Bandit Security Scan
         run: poetry run bandit -r src/hospital_appointment_application
+
+      # Docker Login
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Docker Build & Push
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/hospital-appointment-application:latest
